@@ -1,0 +1,117 @@
+{
+  "customer_id": "starbucks",
+  "metrics": [
+    {
+      "id": "network_availability",
+      "name": "Network Availability",
+      "description": "Availability of the digital network supporting customer-facing transactions.",
+      "domain": "network",
+      "layer": "infrastructure",
+      "unit": "%",
+      "current_value": 99.5,
+      "target_value": 99.9,
+      "source": "customer_assumption",
+      "confidence": 0.7
+    },
+    {
+      "id": "digital_transaction_recovery",
+      "name": "Digital Transaction Recovery Rate",
+      "description": "Percentage of otherwise failed digital transactions recovered through improved network availability.",
+      "domain": "digital_commerce",
+      "layer": "technical_kpi",
+      "unit": "%",
+      "current_value": 0.0,
+      "target_value": 40.0,
+      "source": "customer_assumption",
+      "confidence": 0.5
+    },
+    {
+      "id": "recovered_transactions",
+      "name": "Recovered Transactions",
+      "description": "Additional digital transactions recovered because of improved infrastructure availability.",
+      "domain": "digital_commerce",
+      "layer": "business_kpi",
+      "unit": "transactions/month",
+      "current_value": 0.0,
+      "target_value": 1600.0,
+      "source": "value_engine",
+      "confidence": 0.7
+    },
+    {
+      "id": "incremental_revenue",
+      "name": "Incremental Revenue",
+      "description": "Additional monthly revenue generated from recovered digital transactions.",
+      "domain": "revenue",
+      "layer": "financial_outcome",
+      "unit": "USD/month",
+      "current_value": 0.0,
+      "target_value": 12800.0,
+      "source": "value_engine",
+      "confidence": 0.7
+    },
+    {
+      "id": "ceo_revenue_growth",
+      "name": "CEO Revenue Growth Impact",
+      "description": "Annualized revenue contribution attributable to improved network availability.",
+      "domain": "executive",
+      "layer": "cxo_outcome",
+      "unit": "USD/year",
+      "current_value": 0.0,
+      "target_value": 153600.0,
+      "source": "value_engine",
+      "confidence": 0.6
+    }
+  ],
+  "relationships": [
+    {
+      "source_metric_id": "network_availability",
+      "target_metric_id": "digital_transaction_recovery",
+      "relationship_type": "causes",
+      "coefficient": 0.4,
+      "confidence": 0.5,
+      "assumption": "Improving network availability from 99.5% to 99.9% is assumed to recover 40% of otherwise failed digital transactions.",
+      "scenario_mapping": {
+        "type": "target_based",
+        "source_baseline": 99.5,
+        "source_target": 99.9,
+        "target_value": 0.4
+      }
+    },
+    {
+      "source_metric_id": "digital_transaction_recovery",
+      "target_metric_id": "recovered_transactions",
+      "relationship_type": "causes",
+      "coefficient": 4000.0,
+      "confidence": 0.6,
+      "assumption": "The affected transaction opportunity is assumed to be 4,000 transactions per month.",
+      "scenario_mapping": {
+        "type": "proportional",
+        "source_baseline": 0.0,
+        "source_target": 0.4,
+        "target_value": 4000.0
+      }
+    },
+    {
+      "source_metric_id": "recovered_transactions",
+      "target_metric_id": "incremental_revenue",
+      "relationship_type": "contributes_to",
+      "coefficient": 8.0,
+      "confidence": 0.8,
+      "assumption": "Average transaction value is assumed to be USD 8.",
+      "scenario_mapping": {
+        "type": "proportional",
+        "source_baseline": 0.0,
+        "source_target": 1600.0,
+        "target_value": 8.0
+      }
+    },
+    {
+      "source_metric_id": "incremental_revenue",
+      "target_metric_id": "ceo_revenue_growth",
+      "relationship_type": "enables",
+      "coefficient": 12.0,
+      "confidence": 0.8,
+      "assumption": "Monthly incremental revenue is annualized using 12 months."
+    }
+  ]
+}
