@@ -1,0 +1,73 @@
+{
+  "id": "INC-2026-001",
+  "customer_id": "starbucks",
+  "title": "Intermittent digital payment failures",
+  "summary": "Synthetic incident: elevated payment errors alongside network latency.",
+  "severity": "high",
+  "status": "investigating",
+  "started_at": "2026-10-13T10:00:00Z",
+  "evidence": [
+    {
+      "id": "EV-001",
+      "kind": "metric",
+      "source": "synthetic_network_monitor",
+      "observed_at": "2026-10-13T10:00:00Z",
+      "title": "Network latency increased",
+      "description": "Synthetic latency exceeds the illustrative baseline.",
+      "status": "observed",
+      "metric_name": "network_latency",
+      "value": 850,
+      "unit": "ms",
+      "confidence": 1.0,
+      "related_metric_ids": [
+        "network_availability"
+      ]
+    },
+    {
+      "id": "EV-002",
+      "kind": "metric",
+      "source": "synthetic_payment_monitor",
+      "observed_at": "2026-10-13T10:05:00Z",
+      "title": "Payment error rate increased",
+      "description": "Synthetic payment error rate rose during the incident window.",
+      "status": "observed",
+      "metric_name": "payment_error_rate",
+      "value": 8.5,
+      "unit": "%",
+      "confidence": 1.0,
+      "related_metric_ids": [
+        "digital_transaction_recovery"
+      ]
+    },
+    {
+      "id": "EV-003",
+      "kind": "transaction",
+      "source": "synthetic_transaction_monitor",
+      "observed_at": "2026-10-13T10:10:00Z",
+      "title": "Successful payment volume declined",
+      "description": "Synthetic successful payment volume is below the illustrative baseline.",
+      "status": "observed",
+      "metric_name": "successful_payments",
+      "value": 91.5,
+      "unit": "% of baseline",
+      "confidence": 1.0,
+      "related_metric_ids": [
+        "recovered_transactions"
+      ]
+    },
+    {
+      "id": "EV-004",
+      "kind": "event",
+      "source": "synthetic_infrastructure_events",
+      "observed_at": "2026-10-13T10:12:00Z",
+      "title": "Possible network contribution",
+      "description": "A possible causal link between network latency and payment failures requires investigation.",
+      "status": "inferred",
+      "confidence": 0.55,
+      "related_metric_ids": [
+        "network_availability",
+        "digital_transaction_recovery"
+      ]
+    }
+  ]
+}

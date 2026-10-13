@@ -158,3 +158,30 @@ def test_run_scenario_unknown_customer():
     )
 
     assert response.status_code == 404
+
+
+def test_get_incident():
+    response = client.get("/api/incidents/INC-2026-001")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == "INC-2026-001"
+    assert data["severity"] == "high"
+    assert len(data["evidence"]) == 4
+
+
+def test_get_incident_timeline_is_chronological():
+    response = client.get("/api/incidents/INC-2026-001/timeline")
+
+    assert response.status_code == 200
+    data = response.json()
+    events = data["events"]
+    assert len(events) == 4
+    timestamps = [event["observed_at"] for event in events]
+    assert timestamps == sorted(timestamps)
+
+
+def test_missing_incident():
+    response = client.get("/api/incidents/INC-DOES-NOT-EXIST")
+
+    assert response.status_code == 404

@@ -1,3 +1,4 @@
+import IncidentDashboard from "./IncidentDashboard"
 import { useEffect, useMemo, useRef, useState } from "react"
 import "./App.css"
 import type {
@@ -412,12 +413,16 @@ function App() {
           </p>
         )}
 
+        <IncidentDashboard />
+
+
         <section className="summary" id="cockpit">
           <div className="section-heading">
             <div>
               <div className="eyebrow">
                 EXECUTIVE VALUE SNAPSHOT
               </div>
+
 
               <div className="customer-heading">
                 {graph && (
