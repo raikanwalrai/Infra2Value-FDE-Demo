@@ -92,3 +92,69 @@ def test_missing_impact_path():
     )
 
     assert response.status_code == 404
+
+
+
+def test_run_scenario_success():
+    response = client.post(
+        "/api/value-graphs/starbucks/scenarios",
+        json={
+            "scenario_id": "availability-demo",
+            "name": "Improve Network Availability",
+            "description": "Illustrative scenario.",
+            "overrides": [
+                {
+                    "metric_id": "network_availability",
+                    "baseline_value": 99.5,
+                    "scenario_value": 99.9,
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["scenario_id"] == "availability-demo"
+    assert data["baseline_annual_value"] == 0.0
+    assert data["scenario_annual_value"] == 153600.0
+    assert data["annual_value_delta"] == 153600.0
+    assert data["metric_results"][0]["metric_id"] == "network_availability"
+
+
+def test_run_scenario_unknown_metric():
+    response = client.post(
+        "/api/value-graphs/starbucks/scenarios",
+        json={
+            "scenario_id": "invalid-metric",
+            "name": "Invalid Metric",
+            "overrides": [
+                {
+                    "metric_id": "unknown_metric",
+                    "baseline_value": 0.0,
+                    "scenario_value": 1.0,
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_run_scenario_unknown_customer():
+    response = client.post(
+        "/api/value-graphs/unknown_customer/scenarios",
+        json={
+            "scenario_id": "unknown-customer",
+            "name": "Unknown Customer",
+            "overrides": [
+                {
+                    "metric_id": "network_availability",
+                    "baseline_value": 99.5,
+                    "scenario_value": 99.9,
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 404

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import "./App.css"
 import type {
   Metric,
@@ -8,6 +8,28 @@ import type {
 } from "./types/valueGraph"
 
 const API_BASE_URL = "http://127.0.0.1:8000"
+
+type ScenarioResult = {
+  scenario_id: string
+  scenario_name: string
+  metric_results: {
+    metric_id: string
+    baseline_value: number
+    scenario_value: number
+    delta: number
+  }[]
+  baseline_annual_value: number
+  scenario_annual_value: number
+  annual_value_delta: number
+}
+
+function formatUsd(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 const layerLabels: Record<MetricLayer, string> = {
   infrastructure: "Infrastructure",
@@ -136,6 +158,58 @@ function App() {
   const [graph, setGraph] = useState<ValueGraph | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [scenarioResult, setScenarioResult] =
+    useState<ScenarioResult | null>(null)
+  const [scenarioLoading, setScenarioLoading] = useState(false)
+  const [scenarioError, setScenarioError] = useState<string | null>(null)
+  const scenarioResultsRef = useRef<HTMLElement | null>(null)
+
+  async function runScenario() {
+    setScenarioLoading(true)
+    setScenarioError(null)
+    setScenarioResult(null)
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/value-graphs/starbucks/scenarios`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scenario_id: "availability-demo",
+            name: "Improve Network Availability",
+            description:
+              "Illustrative improvement from 99.5% to 99.9% availability.",
+            overrides: [
+              {
+                metric_id: "network_availability",
+                baseline_value: 99.5,
+                scenario_value: 99.9,
+              },
+            ],
+          }),
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : `Scenario request failed: ${response.status}`,
+        )
+      }
+
+      setScenarioResult(data as ScenarioResult)
+    } catch (err) {
+      setScenarioError(
+        err instanceof Error ? err.message : "Unable to run scenario.",
+      )
+    } finally {
+      setScenarioLoading(false)
+    }
+  }
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/value-graphs/starbucks`)
@@ -157,6 +231,15 @@ function App() {
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    if (scenarioResult) {
+      scenarioResultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }
+  }, [scenarioResult])
 
   const causalPath = useMemo(() => {
     if (!graph) {
@@ -236,12 +319,24 @@ function App() {
             </p>
 
             <div className="hero-actions">
-              <button className="primary-button">
+              <button
+                className="primary-button"
+                onClick={() =>
+                  document.getElementById("causal-map")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  })
+                }
+              >
                 Explore Value Map
               </button>
 
-              <button className="secondary-button">
-                Run a Scenario
+              <button
+                className="secondary-button"
+                onClick={runScenario}
+                disabled={scenarioLoading}
+              >
+                {scenarioLoading ? "Running Scenario..." : "Run a Scenario"}
               </button>
             </div>
           </div>
@@ -269,6 +364,54 @@ function App() {
           </div>
         </section>
 
+        {scenarioResult && (
+          <section ref={scenarioResultsRef} className="scenario-results" aria-live="polite">
+            <div className="eyebrow">SCENARIO RESULTS</div>
+            <h2>{scenarioResult.scenario_name}</h2>
+            <p className="scenario-disclaimer">
+              Illustrative demo only. Results depend on assumed relationships
+              and coefficients; they are not verified customer outcomes.
+            </p>
+
+            <div className="scenario-result-grid">
+              <article>
+                <span>Baseline annual value</span>
+                <strong>
+                  {formatUsd(scenarioResult.baseline_annual_value)}
+                </strong>
+              </article>
+              <article>
+                <span>Scenario annual value</span>
+                <strong>
+                  {formatUsd(scenarioResult.scenario_annual_value)}
+                </strong>
+              </article>
+              <article>
+                <span>Annual value delta</span>
+                <strong>
+                  {formatUsd(scenarioResult.annual_value_delta)}
+                </strong>
+              </article>
+            </div>
+
+            <h3>Metric change</h3>
+            {scenarioResult.metric_results.map((metric) => (
+              <p key={metric.metric_id}>
+                <strong>{metric.metric_id.replaceAll("_", " ")}</strong>:{" "}
+                {metric.baseline_value}% → {metric.scenario_value}%{" "}
+                (change: {metric.delta > 0 ? "+" : ""}{metric.delta.toFixed(1)}{" "}
+                percentage points)
+              </p>
+            ))}
+          </section>
+        )}
+
+        {scenarioError && (
+          <p className="scenario-error" role="alert">
+            Unable to run scenario: {scenarioError}
+          </p>
+        )}
+
         <section className="summary" id="cockpit">
           <div className="section-heading">
             <div>
@@ -276,11 +419,21 @@ function App() {
                 EXECUTIVE VALUE SNAPSHOT
               </div>
 
-              <h2>
-                {graph
-                  ? `${graph.customer_id} — Value Graph`
-                  : "Loading Value Graph..."}
-              </h2>
+              <div className="customer-heading">
+                {graph && (
+                  <img
+                    className="customer-logo"
+                    src="/starbucks-logo.png"
+                    alt="Starbucks logo"
+                  />
+                )}
+                <div>
+                  <h2>{graph ? "Starbucks" : "Loading Value Graph..."}</h2>
+                  <p className="customer-subtitle">
+                    Illustrative customer scenario · Value Graph
+                  </p>
+                </div>
+              </div>
             </div>
 
             <span className="assumption-badge">
@@ -301,7 +454,7 @@ function App() {
           )}
 
           {graph && causalPath.length > 0 && (
-            <div className="causal-map">
+            <div className="causal-map" id="causal-map">
               <div className="causal-map-intro">
                 <div>
                   <div className="eyebrow">CAUSAL VALUE MAP</div>

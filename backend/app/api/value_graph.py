@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException
 
 from app.graph.value_graph_traversal import ValueGraphTraversal
 from app.repositories.value_graph_repository import ValueGraphRepository
+from app.value_engine.scenario_engine import ScenarioEngine
+from app.value_engine.scenario_models import Scenario
 
 
 router = APIRouter(
@@ -108,3 +110,24 @@ def get_impact_path(
             for relationship in relationships
         ],
     }
+
+
+@router.post("/{customer_id}/scenarios")
+def run_scenario(customer_id: str, scenario: Scenario):
+    """Evaluate a proposed scenario against a customer's Value Graph."""
+    engine = ScenarioEngine(DATA_ROOT)
+
+    try:
+        result = engine.evaluate_scenario(customer_id, scenario)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Value graph not found for customer: {customer_id}",
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=str(exc),
+        )
+
+    return result.model_dump()
