@@ -156,6 +156,30 @@ function RelationshipConnector({
 }
 
 function App() {
+  const [activeView, setActiveView] = useState("overview")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const navigationItems = [
+    { id: "overview", label: "Overview", icon: "◫" },
+    { id: "value-map", label: "Value Map", icon: "◇" },
+    { id: "scenarios", label: "Scenarios", icon: "↗" },
+    { id: "incidents", label: "Incidents & Response", icon: "◎" },
+    { id: "cockpit", label: "Executive Cockpit", icon: "▥" },
+    { id: "ask", label: "Ask Infra2Value", icon: "✳" },
+  ]
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    function handleMenuKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    window.addEventListener("keydown", handleMenuKeyDown)
+    return () => window.removeEventListener("keydown", handleMenuKeyDown)
+  }, [mobileMenuOpen])
   const [graph, setGraph] = useState<ValueGraph | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -294,15 +318,54 @@ function App() {
           </div>
         </div>
 
-        <nav className="nav">
-          <a href="#value-map">Value Map</a>
-          <a href="#scenarios">Scenarios</a>
-          <a href="#cockpit">Executive Cockpit</a>
-          <button className="ask-button">Ask Infra2Value</button>
-        </nav>
+        <button
+          className="menu-toggle"
+          aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? "×" : "☰"}
+        </button>
       </header>
 
+      {mobileMenuOpen && (
+        <>
+          <button
+            className="nav-backdrop"
+            aria-label="Close navigation menu"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <aside
+            className="nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Workspace navigation"
+          >
+            <div className="drawer-heading">
+              <span>WORKSPACES</span>
+            </div>
+            <nav className="drawer-nav" aria-label="Main navigation">
+              {navigationItems.map((item) => (
+                <button
+                  key={item.id}
+                  className={`nav-item ${activeView === item.id ? "active" : ""}`}
+                  aria-current={activeView === item.id ? "page" : undefined}
+                  onClick={() => {
+                    setActiveView(item.id)
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+        </>
+      )}
+
       <main>
+        {activeView === "overview" && (
         <section className="hero">
           <div className="hero-content">
             <div className="eyebrow">
@@ -364,8 +427,20 @@ function App() {
             </div>
           </div>
         </section>
+        )}
 
-        {scenarioResult && (
+        {activeView === "scenarios" && (
+          <section className="scenario-workspace">
+            <div className="eyebrow">SCENARIO ANALYSIS</div>
+            <h2>Explore business outcomes</h2>
+            <p>Run an illustrative scenario using the current Value Graph assumptions.</p>
+            <button className="primary-button" onClick={runScenario} disabled={scenarioLoading}>
+              {scenarioLoading ? "Running Scenario..." : "Run Network Availability Scenario"}
+            </button>
+          </section>
+        )}
+
+        {activeView === "scenarios" && scenarioResult && (
           <section ref={scenarioResultsRef} className="scenario-results" aria-live="polite">
             <div className="eyebrow">SCENARIO RESULTS</div>
             <h2>{scenarioResult.scenario_name}</h2>
@@ -407,15 +482,16 @@ function App() {
           </section>
         )}
 
-        {scenarioError && (
+        {activeView === "scenarios" && scenarioError && (
           <p className="scenario-error" role="alert">
             Unable to run scenario: {scenarioError}
           </p>
         )}
 
-        <IncidentDashboard />
+        {activeView === "incidents" && <IncidentDashboard />}
 
 
+        {(activeView === "cockpit" || activeView === "value-map") && (
         <section className="summary" id="cockpit">
           <div className="section-heading">
             <div>
@@ -503,7 +579,9 @@ function App() {
             </div>
           )}
         </section>
+        )}
 
+        {activeView === "overview" && (
         <section className="capabilities" id="value-map">
           <div className="section-heading">
             <div>
@@ -568,6 +646,16 @@ function App() {
             </div>
           )}
         </section>
+        )}
+
+        {activeView === "ask" && (
+          <section className="workspace-placeholder">
+            <div className="eyebrow">ASSISTED ANALYSIS</div>
+            <h2>Ask Infra2Value</h2>
+            <p>The conversational assistant is planned but not yet implemented. The current MVP uses explicit Value Graph relationships and scenario calculations.</p>
+            <p>Next step: add evidence-grounded questions with traceable answers and source references.</p>
+          </section>
+        )}
       </main>
 
       <footer>
