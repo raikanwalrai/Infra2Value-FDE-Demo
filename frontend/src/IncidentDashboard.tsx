@@ -19,6 +19,7 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import "./IncidentDashboard.css"
+import BusinessImpactTrace from "./BusinessImpactTrace"
 
 const API_BASE_URL = "http://127.0.0.1:8000"
 const INCIDENT_ID = "INC-2026-001"
@@ -283,6 +284,8 @@ export default function IncidentDashboard() {
           </ReactFlow>
         </div>
       </article>
+
+      <BusinessImpactTrace />
     </section>
   )
 }

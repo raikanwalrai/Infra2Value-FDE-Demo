@@ -185,3 +185,44 @@ def test_missing_incident():
     response = client.get("/api/incidents/INC-DOES-NOT-EXIST")
 
     assert response.status_code == 404
+
+
+def test_incident_business_impact_returns_evidence_and_paths():
+    response = client.get(
+        "/api/incidents/INC-2026-001/business-impact"
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["analysis_status"] == "potential_impact_trace_only"
+    assert len(data["evidence_mappings"]) == 4
+    assert len(data["impact_paths"]) > 0
+    assert data["estimated_incident_loss"] is None
+
+
+def test_incident_business_impact_traces_to_ceo_outcome():
+    response = client.get(
+        "/api/incidents/INC-2026-001/business-impact"
+    )
+
+    data = response.json()
+    paths = data["impact_paths"]
+
+    assert any(
+        path["target_metric_id"] == "ceo_revenue_growth"
+        and path["metrics"][-1]["id"] == "ceo_revenue_growth"
+        for path in paths
+    )
+
+
+def test_incident_business_impact_marks_paths_as_potential():
+    response = client.get(
+        "/api/incidents/INC-2026-001/business-impact"
+    )
+
+    data = response.json()
+
+    assert all(
+        "not confirmed incident causality" in path["interpretation"]
+        for path in data["impact_paths"]
+    )
