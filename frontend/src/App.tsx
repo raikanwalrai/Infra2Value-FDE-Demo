@@ -142,14 +142,31 @@ function RelationshipConnector({
       <div className="relationship-label">
         <span>{relationship.relationship_type.replaceAll("_", " ")}</span>
         <small>
-          coefficient: {relationship.coefficient.toLocaleString()}
+          Coefficient: {relationship.coefficient.toLocaleString()}
         </small>
+        <small>
+          Confidence: {Math.round(relationship.confidence * 100)}%
+        </small>
+      </div>
+
+      <div
+        className="relationship-confidence-track"
+        role="img"
+        aria-label={`Relationship confidence ${Math.round(relationship.confidence * 100)} percent`}
+      >
+        <div
+          className="relationship-confidence-fill"
+          style={{
+            width: `${Math.max(0, Math.min(100, relationship.confidence * 100))}%`,
+          }}
+        />
       </div>
 
       <div className="connector-arrow">↓</div>
 
       <div className="assumption">
-        {relationship.assumption}
+        <strong>Why this relationship?</strong>
+        <span>{relationship.assumption}</span>
       </div>
     </div>
   )
