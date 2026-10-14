@@ -491,8 +491,8 @@ function App() {
         {activeView === "incidents" && <IncidentDashboard />}
 
 
-        {(activeView === "cockpit" || activeView === "value-map") && (
-        <section className="summary" id="cockpit">
+        {activeView === "value-map" && (
+        <section className="summary" id="value-map-workspace">
           <div className="section-heading">
             <div>
               <div className="eyebrow">
@@ -579,6 +579,69 @@ function App() {
             </div>
           )}
         </section>
+        )}
+
+        {activeView === "cockpit" && (
+          <section className="summary executive-cockpit" id="cockpit">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">EXECUTIVE COCKPIT</div>
+                <div className="customer-heading">
+                  {graph && (
+                    <img className="customer-logo" src="/starbucks-logo.png" alt="Starbucks logo" />
+                  )}
+                  <div>
+                    <h2>{graph ? "Business value outlook" : "Loading executive metrics..."}</h2>
+                    <p className="customer-subtitle">
+                      Illustrative customer scenario · API-driven Value Graph
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <span className="assumption-badge">Potential value · not realised revenue</span>
+            </div>
+
+            {loading && <p className="metric-note">Loading executive metrics from Infra2Value API...</p>}
+            {error && <p className="metric-note" role="alert">Unable to load executive metrics: {error}</p>}
+
+            {graph && (
+              <>
+                <div className="executive-disclaimer">
+                  These figures are illustrative targets and assumptions from the Value Graph.
+                  They are not verified financial results or incident-attributed losses.
+                </div>
+                <div className="metric-grid executive-metric-grid">
+                  {graph.metrics
+                    .filter((metric) =>
+                      ["business_kpi", "financial_outcome", "cxo_outcome"].includes(metric.layer)
+                    )
+                    .map((metric) => (
+                      <article className="metric-card executive-metric-card" key={metric.id}>
+                        <div className="metric-label">{metric.layer.replaceAll("_", " ")}</div>
+                        <h3>{metric.name}</h3>
+                        <div className="executive-value-row">
+                          <span>Current</span>
+                          <strong>{metric.current_value.toLocaleString()} {metric.unit}</strong>
+                        </div>
+                        <div className="executive-value-row">
+                          <span>Target</span>
+                          <strong>
+                            {metric.target_value === null
+                              ? "Not set"
+                              : `${metric.target_value.toLocaleString()} ${metric.unit}`}
+                          </strong>
+                        </div>
+                        <div className="executive-value-row">
+                          <span>Metric confidence</span>
+                          <strong>{Math.round(metric.confidence * 100)}%</strong>
+                        </div>
+                        <p className="metric-note">{metric.description}</p>
+                      </article>
+                    ))}
+                </div>
+              </>
+            )}
+          </section>
         )}
 
         {activeView === "overview" && (
